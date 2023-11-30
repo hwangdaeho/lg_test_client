@@ -1,0 +1,101 @@
+.white-table-wrap{
+  border-radius: 8px;
+  background-color: #FFFFFF;
+  &.sticky-scroll{
+    //.b-table-sticky-header{
+    //  max-height: 270px;
+    //}
+    table{
+      overflow-y: auto;
+    }
+    &.sticky-none{
+      .b-table-sticky-header{
+        overflow: visible;
+      }
+    }
+  }
+  table{
+    margin-bottom: 0;
+    tr{
+      background-color: #FFFFFF;
+    }
+    thead{
+      tr{
+        &:first-child{
+          background-color: #FFFFFF;
+        }
+        th{
+          color: #666;
+          font-size: 0.875rem;
+          font-weight: 500;
+          border-top: none;
+          padding-top: 0.5rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid #f4f4f4;
+        }
+      }
+    }
+    tbody{
+      tr{
+        td{
+          border-right: none;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #000;
+          vertical-align: middle;
+          padding: 1rem 4.8px;
+        }
+      }
+    }
+  }
+}
+.monitor-table{
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0 0.25rem;
+  thead{
+    tr{
+      &:first-child{
+        background-color: #292929;
+      }
+      th{
+        color: #FFF;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border-top: none;
+        padding: 0.5rem;
+        text-align: center;
+        &:first-of-type{
+          border-top-left-radius: 0.5rem;
+          border-bottom-left-radius: 0.5rem;
+        }
+        &:last-of-type{
+          border-top-right-radius: 0.5rem;
+          border-bottom-right-radius: 0.5rem;
+        }
+      }
+    }
+  }
+  tbody{
+    tr{
+      background: #F8F8F8;
+      td{
+        border-right: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #000;
+        vertical-align: middle;
+        padding: 1rem 0;
+        text-align: center;
+        &:first-of-type{
+          border-top-left-radius: 0.5rem;
+          border-bottom-left-radius: 0.5rem;
+        }
+        &:last-of-type{
+          border-top-right-radius: 0.5rem;
+          border-bottom-right-radius: 0.5rem;
+        }
+      }
+    }
+  }
+}

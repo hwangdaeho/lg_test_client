@@ -1,0 +1,25 @@
+.footer {
+  background-color: var(--footer-bg);
+  padding: 40px 0;
+  .collapse-toggle-btn {
+    font: {
+      size: 12px;
+      weight: 600;
+    }
+    &.collapsed {
+      .caret-icon {
+        margin-left: 8px;
+        transform: rotate(180deg);
+      }
+    }
+    &.not-collapsed {
+      .caret-icon {
+        margin-left: 8px;
+        transform: rotate(0);
+      }
+    }
+  }
+  #info {
+    color: var(--footer-text);
+  }
+}

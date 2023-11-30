@@ -1,0 +1,93 @@
+.input-order-number {
+  display: inline-flex;
+  width: 52px;
+  text-align: center;
+}
+.custom-datepicker{
+  &.b-form-datepicker {
+    .form-control {
+      white-space: nowrap;
+      min-width: 100px;
+    }
+  }
+}
+
+.right-label-input{
+  input{
+    position: relative;
+    padding-right: 2rem;
+  }
+  label{
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    font-size: 14px;
+    color: #495057;
+  }
+}
+.right-datepicker{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgb(206, 212, 218);
+  border-radius: 4px;
+  cursor: pointer;
+  label{
+    padding-left: 12px;
+    font-size: 1rem;
+    color: #495057;
+    margin-bottom: 0;
+    &.disabled{
+      color: #999;
+    }
+  }
+  .b-form-datepicker{
+    .btn{
+      border: none !important;
+      &:focus{
+        border: none;
+        box-shadow: none;
+      }
+    }
+    &.show{
+      .btn{
+        background-color: transparent;
+        color: var(--primary);
+      }
+    }
+    &:hover{
+      .btn{
+        background-color: transparent;
+        color: var(--primary);
+      }
+    }
+  }
+}
+
+.radio-information-blue{
+  .custom-control{
+    vertical-align: middle;
+    color: var(--grey-600, var(--color-grey-600, #596066));
+    .custom-control-label{
+      display: inline-flex;
+      align-items: center;
+    }
+    .custom-control-input:checked ~ .custom-control-label::before {
+      background-color: var(--information-blue);
+      border-color: var(--information-blue);
+    }
+    .custom-control-input:not(:disabled):active ~ .custom-control-label::before {
+      color: #fff;
+      background-color: var(--information-blue);
+      border-color: var(--information-blue);
+    }
+    .custom-control-input:focus:not(:checked) ~ .custom-control-label::before {
+      border-color: var(--information-blue);
+    }
+    .custom-control-input:focus ~ .custom-control-label::before{
+      box-shadow: none;
+      border-color: var(--information-blue);
+    }
+  }
+}

@@ -1,0 +1,21 @@
+.v-toast{
+  .v-toast__item{
+    border-radius: 1rem;
+    .v-toast__icon{
+      width: 1rem;
+      min-width: 1rem;
+      height: 1rem;
+    }
+    .v-toast__text{
+      font-size: 0.875rem;
+      padding-left: 0.5rem;
+      font-weight: 600;
+    }
+    &--success{
+      background-color: rgba(52, 199, 89, 0.9);
+    }
+    &--error{
+      background-color:rgba(220, 53, 69, 0.9)
+    }
+  }
+}

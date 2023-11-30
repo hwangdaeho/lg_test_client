@@ -1,0 +1,16 @@
+{
+  "root": true,
+  "parserOptions": {
+    "sourceType": "module",
+    "requireConfigFile": false,
+    "parser": "@babel/eslint-parser"
+  },
+  "extends": ["@nuxtjs", "eslint:recommended", "plugin:nuxt/recommended"],
+  "rules": {
+    "linebreak-style": 0,
+    "vue/mult-word-component-names": "off",
+    "space-before-function-paren": "warn",
+    "no-console": "off"
+  },
+  "plugins": ["vue"]
+}

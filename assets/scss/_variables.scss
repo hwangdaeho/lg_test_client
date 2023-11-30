@@ -1,0 +1,115 @@
+// Base grayscale colors definitions
+$white: #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #e9ecef !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #adb5bd !default;
+$gray-600: #6c757d !default;
+$gray-700: #495057 !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
+$black: #000 !default;
+
+$brown-50: #FAFAFA !default;
+$brown-100: #E2E0DF !default;
+$brown-200: #C3BEBB !default;
+$brown-300: #A69F9B !default;
+$brown-400: #877D78 !default;
+$brown-500: #675F5B !default;
+$brown-600: #514B48 !default;
+$brown-700: #3E3937 !default;
+$brown-800: #292524 !default;
+$brown-900: #161413 !default;
+$brown-950: #0B0A0A !default;
+
+// Base colors definitions
+$blue: #007bff !default;
+$indigo: #6610f2 !default;
+$purple: #6f42c1 !default;
+$pink: #e83e8c !default;
+$red: #dc3545 !default;
+$orange: #fd7e14 !default;
+$yellow: #ffc107 !default;
+$green: #28a745 !default;
+$teal: #20c997 !default;
+$cyan: #17a2b8 !default;
+
+// Theme color default definitions
+// 기본 테마 색상 바꾸기
+//$primary: #0B0A0A !default;
+$primary: #E6287F !default;
+$secondary: #5F46F5 !default;
+$success: #6ddafc !default;
+$info: #009FFC !default;
+$warning: #FF3B30 !default;
+$danger: #101013 !default;
+$light: #EEE !default;
+$dark: $black !default;
+
+// 변수를 추가 할 수도 있다.
+$custom-color: red !default;
+$dark-light: #5A5A5A !default;
+$gray: #F8F8F8 !default;
+$dark-gray: #434343 !default;
+$light-purple: #EAE3FF !default;
+$steal: #F5F5F5 !default;
+$tooltip-bg: #f7f3f9 !default;
+$information-blue: #3B82F6 !default;
+$fluorescence: #00E676 !default;
+$non-active-gray: #B1B1B1 !default;
+$mid-gray: #7A7B7A !default;
+$check-green: #198038 !default;
+$emerald-green: #34C759 !default;
+$dusty-pink: #D05D81 !default;
+
+// This table defines the theme colors (variant names)
+// bg-primary 나 text-success 같이 클래스에서 쓰는 테마색상 이름을 추가 할 수 있다.
+$theme-colors: () !default;
+$theme-colors: map-merge(
+  (
+    "primary": $primary,
+    "secondary": $secondary,
+    "success": $success,
+    "info": $info,
+    "warning": $warning,
+    "danger": $danger,
+    "light": $light,
+    "dark": $dark,
+    "dark-light": $dark-light,
+    "gray": $gray,
+    "dark-gray": $dark-gray,
+    "light-purple": $light-purple,
+    "white": $white,
+    "steal": $steal,
+    "tooltip-bg": $tooltip-bg,
+    "end":$red,
+    "default-light": $light,
+    "information-blue": $information-blue,
+    "fluorescence": $fluorescence,
+    "red": $red,
+    "non-active-gray": $non-active-gray,
+    "check-green": $check-green,
+    "emerald-green": $emerald-green,
+    "dusty-pink": $dusty-pink,
+    "mid-gray": $mid-gray,
+  ),
+  $theme-colors
+);
+
+// layout
+$layout-width: 1280px;
+$layout-height: 768px;
+$layout-header-height: 72px;
+$layout-lnb-width: 6rem;
+$layout-lnb-close-width: 0;
+$layout-default-padding: 1rem;
+$layout-footer-height: 3rem;
+
+//font
+$fs-x-small: 0.750rem;
+$fs-small: 0.875rem;
+$fs-default:1rem;
+$fs-large: 1.125rem;
+$fs-x-large: 1.250rem;
+$fs-x-large: 2.250rem;

@@ -1,0 +1,46 @@
+.markup-page-title{
+  padding: 18px 0 8px 0;
+  .btn{
+    min-height: 42px;
+    i{
+      line-height: initial;
+    }
+  }
+  .form-group .btn{
+    min-height: auto;
+  }
+}
+.custom-breadcrumb{
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: inline-flex;
+  > li {
+    margin-right: 1.5rem;
+    position: relative;
+    a {
+      color: var(--breadcrumb);
+      &.current-link {
+        color: var(--information-blue);
+      }
+    }
+    &:after {
+      content: '>';
+      position: absolute;
+      right: -1rem;
+    }
+    &:last-child {
+      margin-right: 0;
+      color: var(--information-blue);
+      &:after {
+        display: none;
+      }
+    }
+
+  }
+ & .disabled{
+    color: #4F4F4F !important;
+    opacity: 1;
+  }
+
+}

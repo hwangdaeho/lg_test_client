@@ -1,0 +1,559 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Canvas, Euler, RootState, useFrame, useThree, Vector3 } from '@react-three/fiber';
+import { useSocket } from 'hook';
+import {
+  Instances,
+  TransformControls,
+  TransformControlsProps,
+  useCursor,
+  useGLTF,
+  OrbitControls,
+  ContactShadows,
+} from '@react-three/drei';
+import { AxesArrow } from 'components/AxesArrowComponent';
+import { Group, Mesh } from 'three';
+import { GLTF } from 'three-stdlib';
+import { useControls, button, folder } from 'leva';
+import create from 'zustand';
+import * as THREE from 'three';
+import { WSResponse } from 'model';
+import { isEmpty } from 'lodash';
+import { gsap } from 'gsap';
+/**
+ * Type(interface) declaration
+ */
+type GLTFResult = GLTF & {
+  nodes: {
+    w3: THREE.Mesh;
+    w20: THREE.Mesh;
+    w21: THREE.Mesh;
+    w22: THREE.Mesh;
+    w10: THREE.Mesh;
+    w11: THREE.Mesh;
+    w12: THREE.Mesh;
+    for0: THREE.Mesh;
+    for1: THREE.Mesh;
+    for2: THREE.Mesh;
+    for3: THREE.Mesh;
+    for4: THREE.Mesh;
+    for5: THREE.Mesh;
+    for6: THREE.Mesh;
+    up0: THREE.Mesh;
+    up1: THREE.Mesh;
+    up2: THREE.Mesh;
+    up3: THREE.Mesh;
+    up4: THREE.Mesh;
+    up5: THREE.Mesh;
+    up6: THREE.Mesh;
+    up7: THREE.Mesh;
+    sh0: THREE.Mesh;
+    sh1: THREE.Mesh;
+    sh2: THREE.Mesh;
+    base0: THREE.Mesh;
+    base1: THREE.Mesh;
+  };
+  materials: {
+    ['LinkGrey.002']: THREE.MeshStandardMaterial;
+    ['URBlue.004']: THREE.MeshStandardMaterial;
+    ['Black.005']: THREE.MeshStandardMaterial;
+    ['JointGrey.005']: THREE.MeshStandardMaterial;
+    ['URBlue.003']: THREE.MeshStandardMaterial;
+    ['Black.004']: THREE.MeshStandardMaterial;
+    ['JointGrey.004']: THREE.MeshStandardMaterial;
+    ['JointGrey.003']: THREE.MeshStandardMaterial;
+    ['Black.003']: THREE.MeshStandardMaterial;
+    ['URBlue.002']: THREE.MeshStandardMaterial;
+    ['LinkGrey.001']: THREE.MeshStandardMaterial;
+    ['URBlue.001']: THREE.MeshStandardMaterial;
+    ['JointGrey.002']: THREE.MeshStandardMaterial;
+    ['Black.002']: THREE.MeshStandardMaterial;
+    LinkGrey: THREE.MeshStandardMaterial;
+    ['Black.001']: THREE.MeshStandardMaterial;
+    URBlue: THREE.MeshStandardMaterial;
+    ['JointGrey.001']: THREE.MeshStandardMaterial;
+    Black: THREE.MeshStandardMaterial;
+    JointGrey: THREE.MeshStandardMaterial;
+  };
+};
+const useStore = create((set: any) => ({ target: null, setTarget: (target: any) => set({ target }) }));
+
+type GridProps = {
+  number?: number;
+  lineWidth?: number;
+  height?: number;
+};
+
+export type ModelPreviewProps = {
+  updateActualJoint?: (joint: number[]) => void;
+  updateActualFkine?: (position: number[]) => void;
+  updateBallPosition?: (position: number[]) => void;
+  updateCamPose?: (position: number[]) => void; //xyz,quat
+  control_panel_disabled?: boolean;
+  zoom?: number;
+};
+
+type Robot3DProps = {
+  updateActualJoint?: (joint: number[]) => void;
+  updateActualFkine?: (tool: number[]) => void;
+  updateBallPosition?: (position: number[]) => void;
+  updateCamPose?: (position: number[]) => void; //xyz,quat
+  isCanvasDClicked?: boolean;
+};
+
+/**
+ * Component declaration
+ */
+const Robot3D = (props: Robot3DProps) => {
+  const jt0 = useRef<Group>(null!);
+  const jt1 = useRef<Group>(null!);
+  const jt2 = useRef<Group>(null!);
+  const jt3 = useRef<Group>(null!);
+  const jt4 = useRef<Group>(null!);
+  const jt5 = useRef<Group>(null!);
+  const ball = useRef<Mesh>(null!);
+  const flange = useRef<Mesh>(null!);
+  const wrist = useRef<Mesh>(null!);
+
+  const [hovered, setHovered] = useState(false);
+  const [frame_counter, setCounter] = useState(0);
+  const [target_ball_position, setBallPosition] = useState<Vector3>(new THREE.Vector3());
+  const [target_ball_rotation, setBallRotation] = useState<Euler>(new THREE.Euler());
+  const [lookat_target, setLookAt] = useState<Vector3>(new THREE.Vector3(0, 0.3, 0));
+  const [lookat, onLookAtTarget] = useState(true);
+  const [lookat_moving_target, onLookAtMovingTarget] = useState(false);
+  const socket = useSocket();
+  const thr_state = useThree();
+
+  useCursor(hovered);
+  useFrame((state) => {
+    // 60Hz
+    const t = state.clock.getElapsedTime();
+
+    if (lookat) {
+      if (lookat_moving_target) state.camera.lookAt(flange.current.getWorldPosition(new THREE.Vector3(0, 0, 0)));
+      else state.camera.lookAt(lookat_target as THREE.Vector3);
+    }
+
+    setCounter((frame_counter + 1) % 2);
+    if (frame_counter == 0) {
+      if (socket?.connected) {
+        socket?.socket?.emit('get_actual_pose', {}, (res: WSResponse<{ joints: number[]; fkine: number[] }>) => {
+          try {
+            if (res.data != undefined && isEmpty(res.data) != true) {
+              if (jt0.current != null) jt0.current.rotation.y = res.data['joints'][0];
+              if (jt1.current != null) jt1.current.rotation.y = res.data['joints'][1];
+              if (jt2.current != null) jt2.current.rotation.y = res.data['joints'][2];
+              if (jt3.current != null) jt3.current.rotation.y = res.data['joints'][3];
+              if (jt4.current != null) jt4.current.rotation.y = -res.data['joints'][4]; // 부호 반대
+              if (jt5.current != null) jt5.current.rotation.y = -res.data['joints'][5]; // 부호 반대
+
+              if (props.updateActualJoint != undefined) {
+                props.updateActualJoint([...res.data['joints']]);
+              }
+              if (props.updateActualFkine != undefined) {
+                props.updateActualFkine([...res.data['fkine']]);
+              }
+              if (props.updateCamPose != undefined) {
+                props.updateCamPose([...state.camera.position.toArray(), ...state.camera.quaternion.toArray()]);
+              }
+            }
+          } catch (e) {
+            console.log(e);
+          }
+        });
+      }
+    }
+  });
+  const setTarget = useStore((state) => state.setTarget);
+
+  useEffect(() => {
+    setTarget(ball);
+  }, []);
+
+  useEffect(() => {
+    const cam_pos_arr = thr_state.camera.position.toArray();
+    const cam_pos_arr_abs = [...cam_pos_arr].map((item) => Math.abs(item));
+    const max = Math.max(...cam_pos_arr_abs);
+    const idx = cam_pos_arr_abs.indexOf(max);
+    const new_cam_pos_arr = [0, 0, 0];
+    console.log(thr_state.camera.position.toArray());
+    console.log(max);
+    console.log(idx);
+
+    new_cam_pos_arr[idx] = (cam_pos_arr[idx] / max) * 10;
+
+    gsap.timeline().to(thr_state.camera.position, {
+      duration: 2,
+      repeat: 0,
+      x: new_cam_pos_arr[0],
+      y: new_cam_pos_arr[1],
+      z: new_cam_pos_arr[2],
+    });
+  }, [props.isCanvasDClicked]);
+
+  const focus_on = useControls(() => {
+    return {
+      transform: folder({
+        'Focusing [Tool]': button(() => {
+          setLookAt(flange.current.getWorldPosition(new THREE.Vector3(0, 0, 0)));
+          onLookAtTarget(true);
+          onLookAtMovingTarget(true);
+        }),
+        'Focusing [Base]': button(() => {
+          setLookAt(new THREE.Vector3(0, 0.4, 0));
+          onLookAtTarget(true);
+          onLookAtMovingTarget(false);
+        }),
+        Release: button(() => onLookAtTarget(false)),
+        Attatch: button(() => {
+          const mat = flange.current.matrixWorld;
+          const euler = new THREE.Euler().setFromRotationMatrix(mat, 'XYZ');
+          const position = new THREE.Vector3().setFromMatrixPosition(mat);
+          setBallPosition(position);
+          setBallRotation(euler);
+          const quat = new THREE.Quaternion().setFromEuler(euler);
+          if (props.updateBallPosition != undefined)
+            props.updateBallPosition([...position.toArray(), ...quat.toArray()]);
+        }),
+      }),
+    };
+  });
+  const flatten = useControls(() => {
+    return {
+      'Initial view': button(() => {
+        gsap.timeline().to(thr_state.camera.position, { duration: 2, repeat: 0, x: 10, y: 10, z: 10 });
+      }),
+      'Align view': button(() => {
+        const cam_pos_arr = thr_state.camera.position.toArray();
+        const cam_pos_arr_abs = [...cam_pos_arr].map((item) => Math.abs(item));
+        const max = Math.max(...cam_pos_arr_abs);
+        const idx = cam_pos_arr_abs.indexOf(max);
+        const new_cam_pos_arr = [0, 0, 0];
+        console.log(thr_state.camera.position.toArray());
+        console.log(max);
+        console.log(idx);
+
+        new_cam_pos_arr[idx] = (cam_pos_arr[idx] / max) * 10;
+
+        gsap.timeline().to(thr_state.camera.position, {
+          duration: 2,
+          repeat: 0,
+          x: new_cam_pos_arr[0],
+          y: new_cam_pos_arr[1],
+          z: new_cam_pos_arr[2],
+        });
+      }),
+    };
+  });
+  const { nodes, materials } = useGLTF(
+    'http://' + process.env.REACT_APP_SERVER_HOST + ':3000/models/ur10e.gltf',
+  ) as GLTFResult;
+  return (
+    <>
+      <group {...props} dispose={null}>
+        <mesh
+          name="ball"
+          ref={ball}
+          position={target_ball_position}
+          rotation={target_ball_rotation}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+        >
+          <sphereGeometry args={[0.015, 64, 64]} />
+          <meshPhysicalMaterial color={'red'} clearcoat={1} clearcoatRoughness={0} roughness={0} metalness={0.5} />
+        </mesh>
+        <group>
+          <group>
+            <group ref={jt0}>
+              <group ref={jt1} position={[0, 0.181, 0.1761]} rotation={[Math.PI / 2, 0, 0]}>
+                <group ref={jt2} position={[-0.6126, -0.1371, 0]}>
+                  <group ref={jt3} position={[-0.5715, 0, 0.0003]}>
+                    <group ref={jt4} position={[0.0002, 0.1352, 0.0001]} rotation={[-Math.PI / 2, 0, -Math.PI]}>
+                      <group ref={jt5} position={[-0.0001, 0.1206, 0.0005]} rotation={[-Math.PI / 2, 0, Math.PI]}>
+                        <mesh
+                          ref={wrist}
+                          geometry={nodes.w3.geometry}
+                          material={materials['LinkGrey.002']}
+                          rotation={[Math.PI, 0, Math.PI]}
+                          scale={0.001}
+                        ></mesh>
+                        {/* <axesHelper position={[0.0, 0.12, 0.0]} scale={0.2} /> */}
+
+                        <mesh ref={flange} position={[0.0, 0.12, 0.0]}></mesh>
+                      </group>
+                      <mesh
+                        geometry={nodes.w20.geometry}
+                        material={materials['URBlue.004']}
+                        rotation={[Math.PI / 2, 0, 0]}
+                        scale={0.001}
+                      />
+                      <mesh
+                        geometry={nodes.w21.geometry}
+                        material={materials['Black.005']}
+                        rotation={[Math.PI / 2, 0, 0]}
+                        scale={0.001}
+                      />
+                      <mesh
+                        geometry={nodes.w22.geometry}
+                        material={materials['JointGrey.005']}
+                        rotation={[Math.PI / 2, 0, 0]}
+                        scale={0.001}
+                      />
+                    </group>
+                    <mesh
+                      geometry={nodes.w10.geometry}
+                      material={materials['URBlue.003']}
+                      rotation={[Math.PI, 0, Math.PI]}
+                      scale={0.001}
+                    />
+                    <mesh
+                      geometry={nodes.w11.geometry}
+                      material={materials['Black.004']}
+                      rotation={[Math.PI, 0, Math.PI]}
+                      scale={0.001}
+                    />
+                    <mesh
+                      geometry={nodes.w12.geometry}
+                      material={materials['JointGrey.004']}
+                      rotation={[Math.PI, 0, Math.PI]}
+                      scale={0.001}
+                    />
+                  </group>
+                  <mesh
+                    geometry={nodes.for0.geometry}
+                    material={materials['JointGrey.003']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for1.geometry}
+                    material={materials['Black.003']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for2.geometry}
+                    material={materials['URBlue.002']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for3.geometry}
+                    material={materials['JointGrey.003']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for4.geometry}
+                    material={materials['Black.003']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for5.geometry}
+                    material={materials['Black.003']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                  <mesh
+                    geometry={nodes.for6.geometry}
+                    material={materials['LinkGrey.001']}
+                    rotation={[0, Math.PI / 2, 0]}
+                    scale={0.001}
+                  />
+                </group>
+                <mesh
+                  geometry={nodes.up0.geometry}
+                  material={materials['URBlue.001']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up1.geometry}
+                  material={materials['URBlue.001']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up2.geometry}
+                  material={materials['JointGrey.002']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up3.geometry}
+                  material={materials['Black.002']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up4.geometry}
+                  material={materials['JointGrey.002']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up5.geometry}
+                  material={materials['Black.002']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up6.geometry}
+                  material={materials['Black.002']}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+                <mesh
+                  geometry={nodes.up7.geometry}
+                  material={materials.LinkGrey}
+                  rotation={[0, Math.PI / 2, 0]}
+                  scale={0.001}
+                />
+              </group>
+              <mesh
+                geometry={nodes.sh0.geometry}
+                material={materials['Black.001']}
+                position={[0, 0.1814, 0]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={0.001}
+              />
+              <mesh
+                geometry={nodes.sh1.geometry}
+                material={materials.URBlue}
+                position={[0, 0.1814, 0]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={0.001}
+              />
+              <mesh
+                geometry={nodes.sh2.geometry}
+                material={materials['JointGrey.001']}
+                position={[0, 0.1814, 0]}
+                rotation={[Math.PI / 2, 0, 0]}
+                scale={0.001}
+              />
+            </group>
+            <mesh
+              geometry={nodes.base0.geometry}
+              material={materials.Black}
+              rotation={[Math.PI / 2, 0, Math.PI]}
+              scale={0.001}
+            />
+            <mesh
+              geometry={nodes.base1.geometry}
+              material={materials.JointGrey}
+              rotation={[Math.PI / 2, 0, Math.PI]}
+              scale={0.001}
+            />
+          </group>
+        </group>
+      </group>
+    </>
+  );
+};
+
+const Grid = ({ number = 23, lineWidth = 0.026, height = 0.5 }: GridProps) => (
+  // Renders a grid and crosses as instances
+  <Instances
+    position={[0, 0, 0]}
+    matrixWorldAutoUpdate={undefined}
+    getObjectsByProperty={undefined}
+    getVertexPosition={undefined}
+  >
+    <cylinderGeometry args={[0.01, 0.01, height]} />
+    <meshBasicMaterial color="#999" />
+    <gridHelper args={[50, 50, '#bbb', '#bbb']} position={[0, -0.01, 0]} />
+  </Instances>
+);
+
+type ControlsProps = {
+  updateViewFrame?: (val: boolean) => void;
+  updateMode?: (val: string) => void;
+};
+
+export const ModelPreview = (props: ModelPreviewProps) => {
+  const { target, setTarget } = useStore();
+  const [campose, setCam] = useState<THREE.Vector3>();
+  const [dclicked, setDClciked] = useState<boolean>(false);
+  const ref_robot = useRef();
+
+  const r = new THREE.Euler(0, 0, 0);
+  const m = new THREE.Matrix4().makeRotationFromEuler(r);
+  const [{ mode, view_frame }, setMode] = useControls(() => {
+    return {
+      transform: folder(
+        { view_frame: false, mode: { value: 'translate', options: ['translate', 'rotate'] } },
+        { collapsed: true },
+      ),
+    };
+  });
+
+  useEffect(() => {
+    setCam(new THREE.Vector3(10, 10, 10));
+    return setMode({ view_frame: false });
+  }, []);
+
+  return (
+    <div style={{ width: '100%', height: '100%', backgroundColor: 'white', borderRadius: '15px' }}>
+      <Canvas
+        dpr={[1, 2]}
+        shadows
+        orthographic
+        camera={{
+          zoom: props.zoom ? props.zoom : 400,
+          position: campose,
+          fov: 25,
+        }}
+        onDoubleClick={() => {
+          setDClciked(!dclicked);
+        }}
+      >
+        <ambientLight intensity={0.5} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} shadow-mapSize={2048} castShadow />
+        <Robot3D
+          updateBallPosition={props.updateBallPosition}
+          updateActualFkine={props.updateActualFkine}
+          updateActualJoint={props.updateActualJoint}
+          updateCamPose={props.updateCamPose}
+          isCanvasDClicked={dclicked}
+        />
+
+        <ContactShadows
+          position={[0, 0, 0]}
+          opacity={0.4}
+          scale={7}
+          blur={1.2}
+          far={4}
+          matrixWorldAutoUpdate={undefined}
+          getObjectsByProperty={undefined}
+        />
+        {view_frame ? (
+          <>
+            <AxesArrow length={100} transform={m}></AxesArrow>
+            <TransformControls
+              onChange={(e) => {
+                if (props.updateBallPosition != undefined)
+                  props.updateBallPosition([
+                    e?.target.worldPosition.x,
+                    e?.target.worldPosition.y,
+                    e?.target.worldPosition.z,
+                    e?.target.worldQuaternion.x,
+                    e?.target.worldQuaternion.y,
+                    e?.target.worldQuaternion.z,
+                    e?.target.worldQuaternion.w,
+                  ]);
+              }}
+              object={target as any}
+              mode={mode as TransformControlsProps['mode']}
+              matrixWorldAutoUpdate={undefined}
+              getObjectsByProperty={undefined}
+              space="local"
+            />
+          </>
+        ) : undefined}
+        {/* <Grid /> */}
+        <OrbitControls makeDefault />
+      </Canvas>
+    </div>
+  );
+};

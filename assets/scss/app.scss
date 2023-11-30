@@ -1,0 +1,27 @@
+@import 'variables';
+@import 'theme';
+@import 'fonts';
+@import 'mixins';
+
+@import 'bootstrap/scss/bootstrap.scss';
+@import 'bootstrap-vue/src/index.scss';
+
+/** 공통 */
+@import 'common';
+// @import "styles";
+// @import "grid";
+
+/** 레이아웃 */
+@import 'layout';
+ @import 'layout/header';
+// @import 'layout/footer';
+
+/** 페이지 */
+@import "pages";
+
+/** 컴포넌트 */
+ @import "components/pageTitle";
+ @import "components/input";
+ @import "components/tables";
+ @import "components/switch";
+ @import "components/toast";

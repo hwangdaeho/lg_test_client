@@ -1,0 +1,46 @@
+# Nuxt dev/build outputs
+.output
+.nuxt
+# Node dependencies
+node_modules
+# dotenv environment variables file
+.env
+.env.test
+.env.production
+Jenkinsfile
+docker-compose.yml
+
+# folerds
+dev/
+prod/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+/cypress/videos/
+/cypress/screenshots/# Logs
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.eslintcache
+yarn.lock

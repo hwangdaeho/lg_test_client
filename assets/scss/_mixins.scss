@@ -1,0 +1,27 @@
+// 한줄 말줄임
+@mixin ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.text-ellipsis{
+  @include ellipsis;
+}
+
+// 여러줄 말줄임
+@mixin ellipsis-multi($number){
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: $number;
+  -webkit-box-orient: vertical;
+}
+.text-ellipsis-2{
+  @include ellipsis-multi(2);
+}
+
+@mixin mini-tablet {
+  @media (max-width: 1100px) {
+    @content;
+  }
+}

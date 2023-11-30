@@ -1,0 +1,21 @@
+@import "variables";
+
+.layout-container{
+  .content{
+   .nuxt-page{
+     width: 100%;
+     max-width: 1280px;
+     padding: 1rem 1.5rem;
+     min-height: calc(var(--vh, 1vh) * 100 - 7.8rem - 1rem - $layout-footer-height);
+   }
+    .layout-footer{
+      height: $layout-footer-height;
+      .layout-footer-content{
+        max-width: 1280px;
+        padding: 1rem;
+        font-size: 0.750rem;
+        color: #666;
+      }
+    }
+  }
+}
