@@ -8,7 +8,7 @@
         <div class="overflow-hidden canvas-box" style="border-radius: 0.5rem">
           <ModelsObject3D :points="points" @update-points="updatePoints" />
         </div>
-        <p class="mt-2 pl-2 fs-small text-muted d-flex align-items-center">
+        <p class="mt-2 pl-2 fs-small text-muted d-flex align-items-center" @contextmenu="false">
           <b-icon icon="info-circle-fill" variant="secondary" class="mr-2" />
           클릭한 위치에 포인트가 생성됩니다.
         </p>
@@ -115,6 +115,18 @@ export default {
   background-color: rgba(220,220,220,0.2);
   border-radius: 0.5rem;
   border: 1px solid  #dedede;
+  // scrollbar style
+  //  ::-webkit-scrollbar : 스크롤바 전체
+  //  ::-webkit-scrollbar-thumb:드래그 가능한 스크롤 핸들 막대
+  //  ::-webkit-scrollbar-track:스크롤바 트랙 (스크롤이 움직이는 영역 / 스크롤 진행률 표시줄)
+  //  ::-webkit-scrollbar-button: 스크롤바의 방향 버튼 (= 위/아래 표시 화살표)
+  //  ::-webkit-scrollbar-track-piece : 스크롤 진행률 표시줄에서 스크롤 핸들 막대 부분을 제외한 남은 빈 공간
+  //  ::-webkit-scrollbar-corner :수평/수직 스크롤 막대가 만나는 스크롤 막대의 하단 모서리
+  //  ::-webkit-resizer : 요소의 하단 모서리에 나타나는 크기 조정 핸들
+  ::-webkit-scrollbar-track{
+    background: transparent;
+    border: none;
+  }
   .point-input-group{
     border-radius: 0.5rem;
     //background-color: #f6f6f6;
