@@ -18,7 +18,7 @@ import {
   // GridHelper,
   MeshBasicMaterial,
   Raycaster,
-  // SphereGeometry,
+  BoxGeometry,
   HemisphereLight,
   MeshPhongMaterial,
   Fog,
@@ -26,11 +26,12 @@ import {
   Quaternion,
   Euler,
   Vector3,
+  AxesHelper
   //
-  BoxGeometry,
-  WireframeGeometry,
-  LineSegments,
-  LineBasicMaterial
+  // BoxGeometry,
+  // WireframeGeometry,
+  // LineSegments,
+  // LineBasicMaterial,
   // Box3,
   // Vector3
 } from 'three'
@@ -38,6 +39,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper'
 
 export default {
   name: 'Object3D',
@@ -118,6 +120,10 @@ export default {
             .load('r8.obj', function (object) {
               object.traverse(function (child) {
                 child.castShadow = true
+                if (child.isMesh) {
+                  const vHelper = new VertexNormalsHelper(child, 50, 0xFF0000)
+                  child.add(vHelper)
+                }
               })
               object.position.set(0, 0, 0)
               object.scale.setScalar(0.01)
@@ -259,9 +265,9 @@ export default {
           const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
           const point = new Mesh(ballGeometry, ballMaterial)
 
-          const edges = new WireframeGeometry(ballGeometry)
-          const line = new LineSegments(edges, new LineBasicMaterial({ color: 0x198038 }))
-          point.add(line)
+          // const edges = new WireframeGeometry(ballGeometry)
+          // const line = new LineSegments(edges, new LineBasicMaterial({ color: 0x198038 }))
+          // point.add(line)
 
           point.castShadow = true
           point.receiveShadow = true
@@ -273,6 +279,10 @@ export default {
           point.type = 'point'
           point.title = item.title
           this.scene.add(point)
+          // const vHelper = new VertexNormalsHelper(point, 1, 0xFF0000)
+          // this.scene.add(vHelper)
+          const axesHelper = new AxesHelper(10)
+          point.add(axesHelper)
         })
       } else {
         sceneMeshes.forEach((item) => {
