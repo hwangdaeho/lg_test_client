@@ -121,7 +121,7 @@ export default {
               object.traverse(function (child) {
                 child.castShadow = true
                 if (child.isMesh) {
-                  const vHelper = new VertexNormalsHelper(child, 50, 0xFF0000)
+                  const vHelper = new VertexNormalsHelper(child, 50, 0x343434)
                   child.add(vHelper)
                 }
               })
@@ -191,7 +191,7 @@ export default {
       // })
       // //
       this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-      this.controls.minDistance = 30 // 최소 줌 거리
+      // this.controls.minDistance = 30 // 최소 줌 거리소
       this.controls.maxDistance = 200 // 최대 줌 거리
       this.controls.maxPolarAngle = Math.PI / 2 - 0.1 // 상하 회전각 제한
       window.addEventListener('resize', this.onResize)
@@ -232,18 +232,20 @@ export default {
       raycaster.setFromCamera(mouse, this.camera)
 
       // 레이와 3D 모델의 교차점을 찾음
-      const intersects = raycaster.intersectObject(this.modelObj)
+      const intersects = raycaster.intersectObject(this.modelObj, true)
       if (intersects.length > 0) {
         // 곡면 값
         const normal = intersects[0].face.normal
-        const quaternion = new Quaternion().setFromUnitVectors(new Vector3(intersects[0].point.x, intersects[0].point.y, intersects[0].point.z), normal)
+        const quaternion = new Quaternion().setFromUnitVectors(intersects[0].point, normal)
         const rotation = new Euler().setFromQuaternion(quaternion)
         // 클릭한 지점의 표면상의 좌표를 출력
         const point = {
           x: intersects[0].point.x,
           y: intersects[0].point.y,
           z: intersects[0].point.z,
+          point: intersects[0].point,
           title: `포인트${this.points.length + 1 < 10 ? `0${this.points.length + 1}` : this.points.length + 1}`,
+          normal,
           quaternion,
           rotation
         }
@@ -261,7 +263,7 @@ export default {
         })
         this.points.forEach((item) => {
           // const ballGeometry = new SphereGeometry(1)
-          const ballGeometry = new BoxGeometry(4, 4, 4)
+          const ballGeometry = new BoxGeometry(2, 2, 2)
           const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
           const point = new Mesh(ballGeometry, ballMaterial)
 
@@ -275,7 +277,8 @@ export default {
           point.scale.y = 0.2
           point.scale.z = 0.2
           point.position.set(item.x, item.y, item.z)
-          point.rotation.set(item.rotation.x, item.rotation.y, item.rotation.z)
+          // point.position.copy(item.point)
+          point.lookAt(new Vector3().addVectors(item.point, item.normal))
           point.type = 'point'
           point.title = item.title
           this.scene.add(point)
