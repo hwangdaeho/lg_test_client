@@ -61,7 +61,7 @@ export default {
     points: {
       deep: true,
       handler () {
-        this.createPoints()
+        this.createPoints(true)
       }
     }
   },
@@ -121,6 +121,7 @@ export default {
               object.traverse(function (child) {
                 child.castShadow = true
                 if (child.isMesh) {
+                  // 법선 시각화
                   const vHelper = new VertexNormalsHelper(child, 50, 0x343434)
                   child.add(vHelper)
                 }
@@ -191,7 +192,7 @@ export default {
       // })
       // //
       this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-      // this.controls.minDistance = 30 // 최소 줌 거리소
+      this.controls.minDistance = 20 // 최소 줌 거리
       this.controls.maxDistance = 200 // 최대 줌 거리
       this.controls.maxPolarAngle = Math.PI / 2 - 0.1 // 상하 회전각 제한
       window.addEventListener('resize', this.onResize)
@@ -233,7 +234,7 @@ export default {
 
       // 레이와 3D 모델의 교차점을 찾음
       const intersects = raycaster.intersectObject(this.modelObj, true)
-      if (intersects.length > 0) {
+      if (intersects.length > 0 && intersects[0].face) {
         // 곡면 값
         const normal = intersects[0].face.normal
         const quaternion = new Quaternion().setFromUnitVectors(intersects[0].point, normal)
@@ -243,7 +244,6 @@ export default {
           x: intersects[0].point.x,
           y: intersects[0].point.y,
           z: intersects[0].point.z,
-          point: intersects[0].point,
           title: `포인트${this.points.length + 1 < 10 ? `0${this.points.length + 1}` : this.points.length + 1}`,
           normal,
           quaternion,
@@ -252,7 +252,7 @@ export default {
         this.$emit('update-points', point)
       }
     },
-    createPoints () {
+    createPoints (isUpdate) {
       const sceneMeshes = [...this.scene.children]
       if (this.points.length > 0) {
         // 기존에 scene 에 추가된 요소를 모두 제거
@@ -276,14 +276,31 @@ export default {
           point.scale.x = 0.2
           point.scale.y = 0.2
           point.scale.z = 0.2
-          point.position.set(item.x, item.y, item.z)
-          // point.position.copy(item.point)
-          point.lookAt(new Vector3().addVectors(item.point, item.normal))
+          const newPoint = new Vector3(Number(item.x), Number(item.y), Number(item.z))
+          // point.position.set(item.x, item.y, item.z)
+          point.position.copy(newPoint)
+          // point.lookAt(new Vector3().addVectors(newPoint, item.normal))
+          if (isUpdate) {
+            // 포인트의 좌표가 가진 점을 기준으로 교차하는 물체의 표면 방향값 구하기
+            const get3dPoint = new Vector3(Number(item.x), Number(item.y), Number(item.z))
+            const get2dPoint = get3dPoint.project(this.camera)
+            const vector2Point = new Vector2(get2dPoint.x, get2dPoint.y)
+            const raycaster = new Raycaster()
+            raycaster.setFromCamera(vector2Point, this.camera)
+            const intersects = raycaster.intersectObject(this.modelObj, true)
+            if (intersects.length > 0 && intersects[0].face) {
+              // 가장 바깥쪽 표면의 방향
+              const normal = intersects[0].face.normal
+              // 3D 모델의 표면과 같은 방향으로 회전시키기
+              point.lookAt(new Vector3().addVectors(newPoint, normal))
+            }
+          } else {
+            // 3D 모델의 표면과 같은 방향으로 회전시키기
+            point.lookAt(new Vector3().addVectors(newPoint, item.normal))
+          }
           point.type = 'point'
           point.title = item.title
           this.scene.add(point)
-          // const vHelper = new VertexNormalsHelper(point, 1, 0xFF0000)
-          // this.scene.add(vHelper)
           const axesHelper = new AxesHelper(10)
           point.add(axesHelper)
         })
