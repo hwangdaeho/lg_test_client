@@ -24,7 +24,7 @@ import {
   Fog,
   PCFSoftShadowMap,
   Quaternion,
-  Euler,
+  // Euler,
   Vector3,
   AxesHelper
   //
@@ -59,10 +59,10 @@ export default {
   },
   watch: {
     points: {
-      deep: true,
       handler () {
         this.createPoints(true)
-      }
+      },
+      deep: true
     }
   },
   mounted () {
@@ -122,7 +122,7 @@ export default {
                 child.castShadow = true
                 if (child.isMesh) {
                   // 법선 시각화
-                  const vHelper = new VertexNormalsHelper(child, 50, 0x343434)
+                  const vHelper = new VertexNormalsHelper(child, 50, 0xA9A9A9)
                   child.add(vHelper)
                 }
               })
@@ -238,18 +238,24 @@ export default {
         // 곡면 값
         const normal = intersects[0].face.normal
         const quaternion = new Quaternion().setFromUnitVectors(intersects[0].point, normal)
-        const rotation = new Euler().setFromQuaternion(quaternion)
+        // const rotation = new Euler().setFromQuaternion(quaternion)
+        //
+        const ballGeometry = new BoxGeometry(2, 2, 2)
+        const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
+        const point = new Mesh(ballGeometry, ballMaterial)
+        point.position.copy(intersects[0].point)
+        point.lookAt(new Vector3().addVectors(intersects[0].point, normal))
         // 클릭한 지점의 표면상의 좌표를 출력
-        const point = {
+        const item = {
           x: intersects[0].point.x,
           y: intersects[0].point.y,
           z: intersects[0].point.z,
           title: `포인트${this.points.length + 1 < 10 ? `0${this.points.length + 1}` : this.points.length + 1}`,
           normal,
           quaternion,
-          rotation
+          rotation: point.rotation
         }
-        this.$emit('update-points', point)
+        this.$emit('update-points', item)
       }
     },
     createPoints (isUpdate) {
@@ -261,6 +267,7 @@ export default {
             this.scene.remove(item)
           }
         })
+        const rotations = []
         this.points.forEach((item) => {
           // const ballGeometry = new SphereGeometry(1)
           const ballGeometry = new BoxGeometry(2, 2, 2)
@@ -293,10 +300,12 @@ export default {
               const normal = intersects[0].face.normal
               // 3D 모델의 표면과 같은 방향으로 회전시키기
               point.lookAt(new Vector3().addVectors(newPoint, normal))
+              rotations.push(point.rotation)
             }
           } else {
             // 3D 모델의 표면과 같은 방향으로 회전시키기
             point.lookAt(new Vector3().addVectors(newPoint, item.normal))
+            rotations.push(point.rotation)
           }
           point.type = 'point'
           point.title = item.title
@@ -304,6 +313,7 @@ export default {
           const axesHelper = new AxesHelper(10)
           point.add(axesHelper)
         })
+        this.$emit('update-rotation', rotations)
       } else {
         sceneMeshes.forEach((item) => {
           if (item.type === 'point') {

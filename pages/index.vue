@@ -6,7 +6,7 @@
           3D Object
         </h3>
         <div class="overflow-hidden canvas-box" style="border-radius: 0.5rem">
-          <ModelsObject3D :points="points" @update-points="updatePoints" />
+          <ModelsObject3D :points="points" @update-points="updatePoints" @update-rotation="updateRotation" />
         </div>
         <p class="mt-2 pl-2 fs-small text-muted d-flex align-items-center" @contextmenu="false">
           <b-icon icon="info-circle-fill" variant="secondary" class="mr-2" />
@@ -28,13 +28,48 @@
               <div class="title">
                 <b-icon icon="circle-fill" variant="emerald-green" scale="0.7" shift-v="-0.5" /> {{ point.title }}
               </div>
-              <label :for="`pointX${idx}`">x: </label>
-              <b-form-input :id="`pointX${idx}`" v-model="point.x" type="number" class="hide-num-ctrl" />
-              <label :for="`pointY${idx}`">y: </label>
-              <b-form-input :id="`pointY${idx}`" v-model="point.y" type="number" class="hide-num-ctrl" />
-              <label :for="`pointZ${idx}`">z: </label>
-              <b-form-input :id="`pointZ${idx}`" v-model="point.z" type="number" class="hide-num-ctrl" />
-              <b-icon icon="x-circle-fill" variant="mid-gray" scale="1.2" class="ml-auto cursor-pointer mr-2" @click="removePoint(idx)" />
+              <div class="d-flex align-items-center flex-nowrap mb-2">
+                <span class="group-title">
+                  위치
+                </span>
+                <label :for="`pointX${idx}`">x: </label>
+                <b-form-input :id="`pointX${idx}`" v-model="point.x" type="number" class="hide-num-ctrl" />
+                <label :for="`pointY${idx}`">y: </label>
+                <b-form-input :id="`pointY${idx}`" v-model="point.y" type="number" class="hide-num-ctrl" />
+                <label :for="`pointZ${idx}`">z: </label>
+                <b-form-input :id="`pointZ${idx}`" v-model="point.z" type="number" class="hide-num-ctrl" />
+                <b-icon icon="x-circle-fill" variant="mid-gray" scale="1.2" class="ml-auto cursor-pointer mr-2" @click="removePoint(idx)" />
+              </div>
+              <div v-if="rotations.length>0" class="d-flex align-items-center flex-nowrap">
+                <span class="group-title">회전</span>
+                <label :for="`rotateX${idx}`">x: </label>
+                <b-form-input
+                  v-if="rotations[idx]?.x"
+                  :id="`rotateX${idx}`"
+                  v-model="rotations[idx].x"
+                  disabled
+                  type="number"
+                  class="hide-num-ctrl"
+                />
+                <label :for="`rotateY${idx}`">y: </label>
+                <b-form-input
+                  v-if="rotations[idx]?.y"
+                  :id="`rotateY${idx}`"
+                  v-model="rotations[idx].y"
+                  disabled
+                  type="number"
+                  class="hide-num-ctrl"
+                />
+                <label :for="`rotateZ${idx}`">z: </label>
+                <b-form-input
+                  v-if="rotations[idx]?.z"
+                  :id="`rotateZ${idx}`"
+                  v-model="rotations[idx].z"
+                  disabled
+                  type="number"
+                  class="hide-num-ctrl"
+                />
+              </div>
             </b-form-group>
           </template>
           <template v-else>
@@ -56,6 +91,7 @@ export default {
     return {
       pauseModalStatus: false, // 정지 후 외부장치 조정 모달
       points: [],
+      rotations: [],
       isClient: process.client
     }
   },
@@ -95,6 +131,9 @@ export default {
     },
     removePoint (idx) {
       this.points.splice(idx, 1)
+    },
+    updateRotation (val) {
+      this.rotations = val || []
     }
   }
 }
@@ -144,8 +183,9 @@ export default {
     }
     &>div{
       display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
+      //flex-wrap: nowrap;
+      //align-items: center;
+      flex-direction: column;
       .title{
         font-size: 0.750rem;
         font-weight: 600;
@@ -162,8 +202,19 @@ export default {
         border-bottom-color: #fff;
         border-collapse: collapse;
       }
+      .group-title{
+        font-size: 0.875rem;
+        color: #333;
+        font-weight: 700;
+        margin-left: 0.5rem;
+        margin-top: 0.18rem;
+        white-space: nowrap;
+      }
       label{
         margin: 0 0.5rem 0 1rem;
+        &:first-of-type{
+          margin: 0 0.5rem 0 0.5rem;
+        }
       }
       .form-control{
         max-width: 20%;
