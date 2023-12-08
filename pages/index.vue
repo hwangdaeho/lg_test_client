@@ -14,10 +14,15 @@
         </p>
       </b-col>
       <b-col cols="6" class="main-box py-4">
-        <h3 class="mb-3 canvas-title">
-          <b-icon icon="sliders" scale="0.9" />
-          Setting
-        </h3>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class=" canvas-title">
+            <b-icon icon="sliders" scale="0.9" />
+            Setting
+          </h3>
+          <b-button variant="primary" :disabled="points?.length < 1" @click="downloadJSON">
+            다운로드
+          </b-button>
+        </div>
         <div class="points-container">
           <template v-if="points.length>0">
             <b-form-group
@@ -134,6 +139,35 @@ export default {
     },
     updateRotation (val) {
       this.rotations = val || []
+    },
+    downloadJSON () {
+      if (this.rotations?.length < 1) {
+        alert('다운로드 중 문제가 발생하였습니다.')
+        return
+      }
+      // JSON 파일 생성
+      const data = this.points.map((point, idx) => {
+        return {
+          posX: point.x,
+          posY: point.Y,
+          posZ: point.Z,
+          rotateX: this.rotations[idx].x,
+          rotateY: this.rotations[idx].y,
+          rotateZ: this.rotations[idx].z
+        }
+      })
+      const jsonString = JSON.stringify(data)
+      const blob = new Blob([jsonString], { type: 'application/json' })
+      const downloadLink = document.createElement('a')
+      downloadLink.href = URL.createObjectURL(blob)
+      // 파일명 지정
+      const date = new Date()
+      const now = this.$moment(date).format('YYYYMMDDHHmmss')
+      downloadLink.download = `process_${now}.json`
+      downloadLink.textContent = 'Download JSON'
+
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
     }
   }
 }
