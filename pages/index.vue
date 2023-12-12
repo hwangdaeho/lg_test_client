@@ -25,15 +25,15 @@
             Setting
           </h3>
           <div class="d-flex">
-            <b-button v-if="!isPlaying" variant="emerald-green" :disabled="points?.length < 1 || quaternions?.length < 1" class="mr-2" @click="setReady">
+            <b-button variant="emerald-green" :disabled="points?.length < 1 || quaternions?.length < 1" class="mr-2" @click="setReady">
               <b-icon icon="gear-fill" scale="0.9" /> 준비
             </b-button>
-            <b-button v-if="!isPlaying" variant="emerald-green" :disabled="!isReady" class="mr-2" @click="onPlay">
+            <b-button variant="emerald-green" :disabled="!isReady" class="mr-2" @click="onPlay">
               <b-icon icon="play-fill" /> 동작
             </b-button>
-            <b-button v-else variant="dark" class="mr-2" @click="onPause">
-              <b-icon icon="stop-fill" /> 정지
-            </b-button>
+            <!--            <b-button v-else variant="dark" class="mr-2" @click="onPause">-->
+            <!--              <b-icon icon="stop-fill" /> 정지-->
+            <!--            </b-button>-->
             <b-button variant="primary" :disabled="points?.length < 1" @click="downloadJSON">
               <b-icon icon="download" class="mr-1" scale="0.9" />
               다운로드
@@ -180,23 +180,23 @@ export default {
   },
   computed: {
   },
-  watch: {
-    isPlaying (val) {
-      if (val) {
-        // const requestData = () => {
-        //   this.socket.emit('get_pose', { message: 'Please send data' })
-        // }
-        // this.getPoseIntervalFunc = setInterval(requestData, 100)
-        // this.socket.on('get_pose', (data) => {
-        //   console.log('get_pose :: ', data.data)
-        //   // this.robotPos = data.data
-        // })
-      } else {
-        this.getPoseIntervalFunc = null
-        // this.socket.off('get_pose')
-      }
-    }
-  },
+  // watch: {
+  //   isPlaying (val) {
+  //     if (val) {
+  //       // const requestData = () => {
+  //       //   this.socket.emit('get_pose', { message: 'Please send data' })
+  //       // }
+  //       // this.getPoseIntervalFunc = setInterval(requestData, 100)
+  //       // this.socket.on('get_pose', (data) => {
+  //       //   console.log('get_pose :: ', data.data)
+  //       //   // this.robotPos = data.data
+  //       // })
+  //     } else {
+  //       this.getPoseIntervalFunc = null
+  //       // this.socket.off('get_pose')
+  //     }
+  //   }
+  // },
   mounted () {
     const canvasEl = document.body.querySelector('.canvas-box')
     const canvasElInfo = canvasEl.getBoundingClientRect()
@@ -249,6 +249,8 @@ export default {
       this.quaternions = val || []
     },
     setReady () {
+      this.isPlaying = false
+      this.isReady = false
       const poses = this.points.map((point, idx) => {
         return [
           point.x, point.y, point.z,

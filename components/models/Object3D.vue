@@ -242,7 +242,6 @@ export default {
       if (this.controls.enabled) {
         return
       }
-      // 표면 좌표구하고 빨간점 생성해보기
       event.preventDefault()
       const raycaster = new Raycaster()
       // const intersect = raycaster.intersectObjects(this.scene.children)
@@ -280,37 +279,32 @@ export default {
       }
     },
     createPoints (isUpdate) {
-      const sceneMeshes = [...this.scene.children]
+      // 기존에 scene 에 추가된 요소를 모두 제거
+      this.resetPoints()
       if (this.points.length > 0) {
-        // 기존에 scene 에 추가된 요소를 모두 제거
-        sceneMeshes.forEach((item) => {
-          if (item.type === 'point') {
-            this.scene.remove(item)
-          }
-        })
+        const reusableVector3 = new Vector3()
+        const raycaster = new Raycaster()
         // const rotations = []
         const quaternions = []
+        const ballGeometry = new BoxGeometry(1, 1, 1)
+        const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
         this.points.forEach((item) => {
           // const ballGeometry = new SphereGeometry(1)
-          const ballGeometry = new BoxGeometry(1, 1, 1)
-          const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
           const point = new Mesh(ballGeometry, ballMaterial)
-
           point.castShadow = true
           point.receiveShadow = true
           point.scale.x = 0.01
           point.scale.y = 0.01
           point.scale.z = 0.01
-          const newPoint = new Vector3(Number(item.x), Number(item.y), Number(item.z))
+          const newPoint = reusableVector3.set(Number(item.x), Number(item.y), Number(item.z))
           // point.position.set(item.x, item.y, item.z)
           point.position.copy(newPoint)
           // point.lookAt(new Vector3().addVectors(newPoint, item.normal))
           if (isUpdate) {
             // 포인트의 좌표가 가진 점을 기준으로 교차하는 물체의 표면 방향값 구하기
-            const get3dPoint = new Vector3(Number(item.x), Number(item.y), Number(item.z))
+            const get3dPoint = reusableVector3.set(Number(item.x), Number(item.y), Number(item.z))
             const get2dPoint = get3dPoint.project(this.camera)
             const vector2Point = new Vector2(get2dPoint.x, get2dPoint.y)
-            const raycaster = new Raycaster()
             raycaster.setFromCamera(vector2Point, this.camera)
             const intersects = raycaster.intersectObject(this.modelObj)
             if (intersects.length > 0 && intersects[0].face) {
@@ -330,7 +324,7 @@ export default {
           point.type = 'point'
           point.title = item.title
           this.scene.add(point)
-          const axesHelper = new AxesHelper(10)
+          const axesHelper = new AxesHelper(5)
           // X 축은 빨간색입니다.
           // Y 축은 녹색입니다.
           // Z 축은 파란색입니다.
@@ -338,13 +332,15 @@ export default {
         })
         // this.$emit('update-rotation', rotations)
         this.$emit('update-quaternion', quaternions)
-      } else {
-        sceneMeshes.forEach((item) => {
-          if (item.type === 'point') {
-            this.scene.remove(item)
-          }
-        })
       }
+    },
+    resetPoints () {
+      const sceneMeshes = [...this.scene.children]
+      sceneMeshes.forEach((item) => {
+        if (item.type === 'point') {
+          this.scene.remove(item)
+        }
+      })
     },
     updateRobotPos () {
       // 로봇팔 움직임 업데이트
