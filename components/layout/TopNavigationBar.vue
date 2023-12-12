@@ -9,6 +9,7 @@
           :class="{'active':activeId === `menu-${menu.id}`}"
           variant="transparent"
           class="layout-lnb-menu-item"
+          :disabled="index>0"
           @click="movePage($event,menu.url, menu.id)"
         >
           <div class="d-flex flex-column align-items-center justify-content-center">
@@ -43,29 +44,25 @@ export default {
           id: 0,
           icon: 'nav_home',
           name: 'Home',
-          url: '/',
-          isExpert: false
+          url: '/'
         },
         {
           id: 1,
           icon: 'nav_setup',
           name: '메뉴1',
-          url: '/test',
-          isExpert: false
+          url: '/test'
         },
         {
           id: 2,
           icon: 'nav_setup',
           name: '메뉴2',
-          url: '/test',
-          isExpert: false
+          url: '/test'
         },
         {
           id: 3,
           icon: 'nav_setup',
           name: '메뉴3',
-          url: '/test',
-          isExpert: false
+          url: '/test'
         }
       ]
     }

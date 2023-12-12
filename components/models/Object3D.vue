@@ -35,17 +35,19 @@ import {
   // Box3,
   // Vector3
 } from 'three'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+// import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
+// import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper'
+// import { VertexNormalsHelper } from 'three/examples/jsm/helpers/VertexNormalsHelper'
 
 export default {
   name: 'Object3D',
   props: {
-    points: { type: Array, required: false, default: () => [] }
+    points: { type: Array, required: false, default: () => [] },
+    robotPos: { type: Object, required: false, default: () => {} }
   },
+
   data () {
     return {
       canvasContainer: null,
@@ -63,6 +65,9 @@ export default {
         this.createPoints(true)
       },
       deep: true
+    },
+    robotPos () {
+      this.updateRobotPos()
     }
   },
   mounted () {
@@ -72,17 +77,17 @@ export default {
     initCanvas () {
       this.scene = new Scene()
       this.scene.background = new Color(0xA0A0A0)
-      this.scene.fog = new Fog(0xA0A0A0, 1, 500)
+      this.scene.fog = new Fog(0xA0A0A0, 0.1, 10)
       this.renderer = new WebGLRenderer({ antialias: true })
       this.renderer.shadowMap.enabled = true
       this.renderer.shadowMap.type = PCFSoftShadowMap
       this.canvasContainer = document.getElementById('canvas-container')
       this.canvasInfo = this.canvasContainer.getBoundingClientRect()
 
-      this.camera = new PerspectiveCamera(35, this.canvasInfo.width / this.canvasInfo.height, 1, 500)
+      this.camera = new PerspectiveCamera(35, this.canvasInfo.width / this.canvasInfo.height, 0.1, 500)
       this.canvasContainer.appendChild(this.renderer.domElement)
       // this.camera.position.set(4, 1.6, 4.5)
-      this.camera.position.set(50, 40, 50)
+      this.camera.position.set(0, 0.3, 1)
       // this.camera.zoom = 0.8
       this.camera.lookAt(this.scene.position)
       // this.camera.updateProjectionMatrix()
@@ -109,54 +114,71 @@ export default {
       ground.receiveShadow = true
       this.scene.add(ground)
       // 3D모델
-      new MTLLoader()
+      new OBJLoader()
         .setPath('/obj/')
-        .load('r8.mtl', function (materials) {
-          materials.preload()
-
-          new OBJLoader()
-            .setMaterials(materials)
-            .setPath('/obj/')
-            .load('r8.obj', function (object) {
-              object.traverse(function (child) {
-                child.castShadow = true
-                if (child.isMesh) {
-                  // 법선 시각화
-                  const vHelper = new VertexNormalsHelper(child, 50, 0xA9A9A9)
-                  child.add(vHelper)
-                }
-              })
-              object.position.set(0, 0, 0)
-              object.scale.setScalar(0.01)
-              this.scene.add(object)
-              this.modelObj = object
-            }.bind(this))
+        .load('drawer_scaled.obj', function (object) {
+          object.traverse(function (child) {
+            child.castShadow = true
+            // if (child.isMesh) {
+            //   // 법선 시각화
+            //   const vHelper = new VertexNormalsHelper(child, 50, 0xA9A9A9)
+            //   child.add(vHelper)
+            // }
+          })
+          object.position.set(0, 0, 0)
+          // object.scale.setScalar(100)
+          this.scene.add(object)
+          this.modelObj = object
         }.bind(this))
+      // new MTLLoader()
+      //   .setPath('/obj/')
+      //   .load('r8.mtl', function (materials) {
+      //     materials.preload()
+      //
+      //     new OBJLoader()
+      //       .setMaterials(materials)
+      //       .setPath('/obj/')
+      //       .load('r8.obj', function (object) {
+      //         object.traverse(function (child) {
+      //           child.castShadow = true
+      //           if (child.isMesh) {
+      //             // 법선 시각화
+      //             const vHelper = new VertexNormalsHelper(child, 50, 0xA9A9A9)
+      //             child.add(vHelper)
+      //           }
+      //         })
+      //         object.position.set(0, 0, 0)
+      //         object.scale.setScalar(0.01)
+      //         this.scene.add(object)
+      //         this.modelObj = object
+      //       }.bind(this))
+      //   }.bind(this))
       // 로봇팔
-      const gltfLoader = new GLTFLoader()
-      const that = this
-      Promise.all([
-        gltfLoader.loadAsync('/gltf/ur10e.gltf')
-      ]).then((results) => {
-        const [robot] = results
-        // gltf 마지막 관절 조절
-        const gltfModel = robot.scene
-        gltfModel.traverse((child) => {
-          child.castShadow = true
-          if (child.name === 'wrist3') {
-            const flange = new Mesh()
-            flange.name = 'flange'
-            flange.position.set(0, 0.12, 0)
-            child.add(flange)
-          }
-        })
-        gltfModel.scale.setScalar(10)
-        gltfModel.position.set(25, 0, 0)
-        that.scene.add(gltfModel)
-        that.robotObj = gltfModel
-      }).catch((error) => {
-        console.log('load error ', error)
-      })
+      // const gltfLoader = new GLTFLoader()
+      // const that = this
+      // Promise.all([
+      //   gltfLoader.loadAsync('/gltf/ur10e.gltf')
+      // ]).then((results) => {
+      //   const [robot] = results
+      //   // gltf 마지막 관절 조절
+      //   const gltfModel = robot.scene
+      //   gltfModel.traverse((child) => {
+      //     child.castShadow = true
+      //     if (child.name === 'wrist3') {
+      //       const flange = new Mesh()
+      //       flange.name = 'flange'
+      //       flange.position.set(0, 0.12, 0)
+      //       child.add(flange)
+      //     }
+      //   })
+      //   gltfModel.scale.setScalar(10)
+      //   // gltfModel.position.set(25, 0, 0)
+      //   gltfModel.position.set(25, 0, 0)
+      //   that.scene.add(gltfModel)
+      //   that.robotObj = gltfModel
+      // }).catch((error) => {
+      //   console.log('load error ', error)
+      // })
       //
       // const loader = new GLTFLoader()
       // Promise.all([
@@ -192,8 +214,8 @@ export default {
       // })
       // //
       this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-      this.controls.minDistance = 20 // 최소 줌 거리
-      this.controls.maxDistance = 200 // 최대 줌 거리
+      this.controls.minDistance = 0.5 // 최소 줌 거리
+      this.controls.maxDistance = 5 // 최대 줌 거리
       this.controls.maxPolarAngle = Math.PI / 2 - 0.1 // 상하 회전각 제한
       window.addEventListener('resize', this.onResize)
       this.canvasContainer.addEventListener('mousedown', (e) => {
@@ -240,7 +262,7 @@ export default {
         const quaternion = new Quaternion().setFromUnitVectors(intersects[0].point, normal)
         // const rotation = new Euler().setFromQuaternion(quaternion)
         //
-        const ballGeometry = new BoxGeometry(2, 2, 2)
+        const ballGeometry = new BoxGeometry(1, 1, 1)
         const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
         const point = new Mesh(ballGeometry, ballMaterial)
         point.position.copy(intersects[0].point)
@@ -252,8 +274,7 @@ export default {
           z: intersects[0].point.z,
           title: `포인트${this.points.length + 1 < 10 ? `0${this.points.length + 1}` : this.points.length + 1}`,
           normal,
-          quaternion,
-          rotation: point.rotation
+          quaternion
         }
         this.$emit('update-points', item)
       }
@@ -267,22 +288,19 @@ export default {
             this.scene.remove(item)
           }
         })
-        const rotations = []
+        // const rotations = []
+        const quaternions = []
         this.points.forEach((item) => {
           // const ballGeometry = new SphereGeometry(1)
-          const ballGeometry = new BoxGeometry(2, 2, 2)
+          const ballGeometry = new BoxGeometry(1, 1, 1)
           const ballMaterial = new MeshBasicMaterial({ color: 0x51FF0D })
           const point = new Mesh(ballGeometry, ballMaterial)
 
-          // const edges = new WireframeGeometry(ballGeometry)
-          // const line = new LineSegments(edges, new LineBasicMaterial({ color: 0x198038 }))
-          // point.add(line)
-
           point.castShadow = true
           point.receiveShadow = true
-          point.scale.x = 0.2
-          point.scale.y = 0.2
-          point.scale.z = 0.2
+          point.scale.x = 0.01
+          point.scale.y = 0.01
+          point.scale.z = 0.01
           const newPoint = new Vector3(Number(item.x), Number(item.y), Number(item.z))
           // point.position.set(item.x, item.y, item.z)
           point.position.copy(newPoint)
@@ -294,26 +312,32 @@ export default {
             const vector2Point = new Vector2(get2dPoint.x, get2dPoint.y)
             const raycaster = new Raycaster()
             raycaster.setFromCamera(vector2Point, this.camera)
-            const intersects = raycaster.intersectObject(this.modelObj, true)
+            const intersects = raycaster.intersectObject(this.modelObj)
             if (intersects.length > 0 && intersects[0].face) {
               // 가장 바깥쪽 표면의 방향
               const normal = intersects[0].face.normal
               // 3D 모델의 표면과 같은 방향으로 회전시키기
               point.lookAt(new Vector3().addVectors(newPoint, normal))
-              rotations.push(point.rotation)
+              // rotations.push(point.rotation)
+              quaternions.push(point.quaternion)
             }
           } else {
             // 3D 모델의 표면과 같은 방향으로 회전시키기
             point.lookAt(new Vector3().addVectors(newPoint, item.normal))
-            rotations.push(point.rotation)
+            // rotations.push(point.rotation)
+            quaternions.push(point.quaternion)
           }
           point.type = 'point'
           point.title = item.title
           this.scene.add(point)
           const axesHelper = new AxesHelper(10)
+          // X 축은 빨간색입니다.
+          // Y 축은 녹색입니다.
+          // Z 축은 파란색입니다.
           point.add(axesHelper)
         })
-        this.$emit('update-rotation', rotations)
+        // this.$emit('update-rotation', rotations)
+        this.$emit('update-quaternion', quaternions)
       } else {
         sceneMeshes.forEach((item) => {
           if (item.type === 'point') {
@@ -321,6 +345,33 @@ export default {
           }
         })
       }
+    },
+    updateRobotPos () {
+      // 로봇팔 움직임 업데이트
+      // const pos = this.robotPos
+      // const joints = ['shoulder', 'upper-arm', 'fore-arm', 'wrist1', 'wrist2', 'wrist3']
+      // if (this.robotObj) {
+      //   joints.map((joint) => {
+      //     this.robotObj.traverse((child) => {
+      //       const isSameName = val => val === child.name
+      //       if (child.name === 'wrist3') {
+      //         const mat = child.matrixWorld
+      //         const q = new Quaternion().setFromRotationMatrix(mat, 'XYZ')
+      //         this.quaternion = [q.x, q.y, q.z, q.w]
+      //       }
+      //       const idx = joints.findIndex(isSameName)
+      //       if (idx > -1) {
+      //         if (child.name === 'wrist2') {
+      //           child.rotation.y = pos[idx] * Math.PI / 180 * -1
+      //           // child.rotation.z = child.rotation.z * -1
+      //         } else {
+      //           child.rotation.y = pos[idx] * Math.PI / 180
+      //         }
+      //       }
+      //     })
+      //     return joint
+      //   })
+      // }
     },
     onResize () {
       this.renderer.setSize(this.canvasInfo.width, this.canvasInfo.height)
