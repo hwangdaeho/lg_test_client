@@ -7,10 +7,9 @@
         </h3>
         <div class="overflow-hidden canvas-box" style="border-radius: 0.5rem">
           <ModelsObject3D
-            :points="points"
+            ref="ModelsObject3D"
             :robot-pos="robotPos"
             @update-points="updatePoints"
-            @update-quaternion="updateQuaternion"
           />
         </div>
         <p class="mt-2 pl-2 fs-small text-muted d-flex align-items-center" @contextmenu="false">
@@ -25,7 +24,7 @@
             Setting
           </h3>
           <div class="d-flex">
-            <b-button variant="emerald-green" :disabled="points?.length < 1 || quaternions?.length < 1" class="mr-2" @click="setReady">
+            <b-button variant="emerald-green" :disabled="points?.length < 1" class="mr-2" @click="setReady">
               <b-icon icon="gear-fill" scale="0.9" /> 준비
             </b-button>
             <b-button variant="emerald-green" :disabled="!isReady" class="mr-2" @click="onPlay">
@@ -55,48 +54,44 @@
                   위치
                 </span>
                 <label :for="`pointX${idx}`">x: </label>
-                <b-form-input :id="`pointX${idx}`" v-model="point.x" type="number" class="hide-num-ctrl" />
+                <b-form-input :id="`pointX${idx}`" v-model="point.position.x" type="number" class="hide-num-ctrl" @input="changeInput(point)" />
                 <label :for="`pointY${idx}`">y: </label>
-                <b-form-input :id="`pointY${idx}`" v-model="point.y" type="number" class="hide-num-ctrl" />
+                <b-form-input :id="`pointY${idx}`" v-model="point.position.y" type="number" class="hide-num-ctrl" @input="changeInput(point)" />
                 <label :for="`pointZ${idx}`">z: </label>
-                <b-form-input :id="`pointZ${idx}`" v-model="point.z" type="number" class="hide-num-ctrl" />
+                <b-form-input :id="`pointZ${idx}`" v-model="point.position.z" type="number" class="hide-num-ctrl" @input="changeInput(point)" />
                 <b-form-input v-show="false" type="number" class="hide-num-ctrl" />
-                <b-icon icon="x-circle-fill" variant="mid-gray" scale="1.2" class="ml-auto cursor-pointer mr-2" @click="removePoint(idx)" />
+                <b-icon icon="x-circle-fill" variant="mid-gray" scale="1.2" class="ml-auto cursor-pointer mr-2" @click="removePoint(point,idx)" />
               </div>
-              <div v-if="quaternions.length>0" class="d-flex align-items-center flex-nowrap">
+              <div class="d-flex align-items-center flex-nowrap">
                 <span class="group-title">회전</span>
                 <label :for="`rotateX${idx}`">x: </label>
                 <b-form-input
-                  v-if="quaternions[idx]?.x"
                   :id="`rotateX${idx}`"
-                  v-model="quaternions[idx].x"
+                  v-model="point.quaternion.x"
                   disabled
                   type="number"
                   class="hide-num-ctrl"
                 />
                 <label :for="`rotateY${idx}`">y: </label>
                 <b-form-input
-                  v-if="quaternions[idx]?.y"
                   :id="`rotateY${idx}`"
-                  v-model="quaternions[idx].y"
+                  v-model="point.quaternion.y"
                   disabled
                   type="number"
                   class="hide-num-ctrl"
                 />
                 <label :for="`rotateZ${idx}`">z: </label>
                 <b-form-input
-                  v-if="quaternions[idx]?.z"
                   :id="`rotateZ${idx}`"
-                  v-model="quaternions[idx].z"
+                  v-model="point.quaternion.z"
                   disabled
                   type="number"
                   class="hide-num-ctrl"
                 />
                 <label :for="`rotateW${idx}`">w: </label>
                 <b-form-input
-                  v-if="quaternions[idx]?.w"
                   :id="`rotateW${idx}`"
-                  v-model="quaternions[idx].w"
+                  v-model="point.quaternion.w"
                   disabled
                   type="number"
                   class="hide-num-ctrl"
@@ -110,36 +105,6 @@
                   @click="removePoint(idx)"
                 />
               </div>
-              <!--              <div v-if="rotations.length>0" class="d-flex align-items-center flex-nowrap">-->
-              <!--                <span class="group-title">회전</span>-->
-              <!--                <label :for="`rotateX${idx}`">x: </label>-->
-              <!--                <b-form-input-->
-              <!--                  v-if="rotations[idx]?.x"-->
-              <!--                  :id="`rotateX${idx}`"-->
-              <!--                  v-model="rotations[idx].x"-->
-              <!--                  disabled-->
-              <!--                  type="number"-->
-              <!--                  class="hide-num-ctrl"-->
-              <!--                />-->
-              <!--                <label :for="`rotateY${idx}`">y: </label>-->
-              <!--                <b-form-input-->
-              <!--                  v-if="rotations[idx]?.y"-->
-              <!--                  :id="`rotateY${idx}`"-->
-              <!--                  v-model="rotations[idx].y"-->
-              <!--                  disabled-->
-              <!--                  type="number"-->
-              <!--                  class="hide-num-ctrl"-->
-              <!--                />-->
-              <!--                <label :for="`rotateZ${idx}`">z: </label>-->
-              <!--                <b-form-input-->
-              <!--                  v-if="rotations[idx]?.z"-->
-              <!--                  :id="`rotateZ${idx}`"-->
-              <!--                  v-model="rotations[idx].z"-->
-              <!--                  disabled-->
-              <!--                  type="number"-->
-              <!--                  class="hide-num-ctrl"-->
-              <!--                />-->
-              <!--              </div>-->
             </b-form-group>
           </template>
           <template v-else>
@@ -168,8 +133,6 @@ export default {
     return {
       pauseModalStatus: false, // 정지 후 외부장치 조정 모달
       points: [],
-      rotations: [],
-      quaternions: [],
       isClient: process.client,
       getPoseIntervalFunc: null,
       isReady: false,
@@ -237,24 +200,19 @@ export default {
       }
     },
     updatePoints (val) {
-      this.points.push(val)
+      // this.points.push(val)
+      this.points = val
     },
-    removePoint (idx) {
-      this.points.splice(idx, 1)
-    },
-    updateRotation (val) {
-      this.rotations = val || []
-    },
-    updateQuaternion (val) {
-      this.quaternions = val || []
+    removePoint (val, idx) {
+      this.$refs.ModelsObject3D.removePoint(val, idx)
     },
     setReady () {
       this.isPlaying = false
       this.isReady = false
       const poses = this.points.map((point, idx) => {
         return [
-          point.x, point.y, point.z,
-          this.quaternions[idx].x, this.quaternions[idx].y, this.quaternions[idx].z, this.quaternions[idx].w]
+          point.position.x, point.position.y, point.position.z,
+          point.quaternion.x, point.quaternion.y, point.quaternion.z, point.quaternion.w]
       })
       console.log('poses ::: ', poses)
       this.socket.emit('set_motion_plan_goals', { poses })
@@ -273,21 +231,15 @@ export default {
       this.isPlaying = false
     },
     downloadJSON () {
-      if (this.quaternions?.length < 1) {
+      if (this.points?.length < 1) {
         alert('다운로드 중 문제가 발생하였습니다.')
         return
       }
       // JSON 파일 생성
       const data = this.points.map((point, idx) => {
-        return {
-          x: point.x,
-          y: point.Y,
-          z: point.Z,
-          qx: this.quaternions[idx].x,
-          qy: this.quaternions[idx].y,
-          qz: this.quaternions[idx].z,
-          qw: this.quaternions[idx].w
-        }
+        return [
+          point.position.x, point.position.y, point.position.z,
+          point.quaternion.x, point.quaternion.y, point.quaternion.z, point.quaternion.w]
       })
       const jsonString = JSON.stringify(data)
       const blob = new Blob([jsonString], { type: 'application/json' })
@@ -301,6 +253,9 @@ export default {
 
       document.body.appendChild(downloadLink)
       downloadLink.click()
+    },
+    changeInput (val) {
+      this.$refs.ModelsObject3D.updatePoint(val)
     }
   }
 }
