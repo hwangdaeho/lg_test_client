@@ -3,7 +3,28 @@
     id="canvas-container"
     class="canvas-container"
     style="width: 100%; min-width: 100%; height: 500px"
-  />
+  >
+    <div
+      v-if="rotationObj"
+      id="slider-container"
+      class="obj-slider-container d-flex align-items-center"
+    >
+      <vue-slider
+        v-model="objRotateVal"
+        :min="0"
+        :max="6.28"
+        :interval="0.1"
+        :height="6"
+        :width="100"
+        class="obj-rotation-slider"
+        tooltip="none"
+        process-class="bg-primary"
+        @callback="onSliderChange"
+        @drag-end="rotationObj = null"
+      />
+      <b-icon icon="x-circle-fill" variant="default-light" class="cursor-pointer" @click="rotationObj = null" />
+    </div>
+  </div>
 </template>
 <script>
 import {
@@ -15,7 +36,6 @@ import {
   PlaneGeometry,
   Mesh,
   Vector2,
-  // GridHelper,
   MeshBasicMaterial,
   Raycaster,
   BoxGeometry,
@@ -27,12 +47,7 @@ import {
   // Euler,
   Vector3,
   AxesHelper
-  //
-  // BoxGeometry,
-  // WireframeGeometry,
-  // LineSegments,
-  // LineBasicMaterial,
-  // Box3,
+  // Box3
   // Vector3
 } from 'three'
 // import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
@@ -47,7 +62,6 @@ export default {
     // points: { type: Array, required: false, default: () => [] },
     robotPos: { type: Object, required: false, default: () => {} }
   },
-
   data () {
     return {
       canvasContainer: null,
@@ -57,7 +71,12 @@ export default {
       renderer: null,
       modelObj: null,
       robotObj: null,
-      points: []
+      points: [],
+      isRightButton: false,
+      isPoint: false,
+      // 회전에 필요한 값들
+      rotationObj: null,
+      objRotateVal: 0
     }
   },
   // watch: {
@@ -113,7 +132,9 @@ export default {
       const ground = new Mesh(new PlaneGeometry(this.canvasInfo.width, this.canvasInfo.height), new MeshPhongMaterial({ color: 0xCBCBCB, depthWrite: false }))
       ground.rotation.x = -Math.PI / 2
       ground.receiveShadow = true
+      ground.title = 'ground'
       this.scene.add(ground)
+
       // 3D모델
       new OBJLoader()
         .setPath('/obj/')
@@ -219,20 +240,44 @@ export default {
       this.controls.maxDistance = 5 // 최대 줌 거리
       this.controls.maxPolarAngle = Math.PI / 2 - 0.1 // 상하 회전각 제한
       window.addEventListener('resize', this.onResize)
+
       this.canvasContainer.addEventListener('mousedown', (e) => {
+        // 클릭한 대상 확인
+        const mouse = new Vector2()
+        mouse.x = ((e.clientX - this.canvasInfo.left) / this.canvasInfo.width) * 2 - 1
+        mouse.y = -((e.clientY - this.canvasInfo.top) / this.canvasInfo.height) * 2 + 1
+        const raycaster = new Raycaster()
+        raycaster.setFromCamera(mouse, this.camera)
+        // 광선과 교차하는 객체들을 찾음 (그라운드 제외)
+        const objects = this.scene.children.filter(item => item.title !== 'ground')
+        // AxesHelper 통과시키기 위해 recursive 옵션 false
+        const objIntersects = raycaster.intersectObjects(objects, false)
+        this.isPoint = (objIntersects.length > 0 && objIntersects[0].object.isPoint) || (objIntersects.length > 0 && objIntersects[0].object.type === 'AxesHelper')
+        //
         e = e || window.event
-        let isRightButton = false
         if ('which' in e) {
           // Gecko (Firefox), WebKit (Safari/Chrome) & Opera
-          isRightButton = e.which === 3
+          this.isRightButton = e.which === 3
         } else if ('button' in e) {
           // IE, Opera
-          isRightButton = e.button === 2
+          this.isRightButton = e.button === 2
         }
         // 3D 모델에 좌클릭한 경우 카메라 조정 제한
-        this.controls.enabled = isRightButton
+        this.controls.enabled = this.isRightButton
+        if (this.isRightButton) {
+          if (objIntersects.length > 0 && objIntersects[0].object.isPoint) {
+            // 우클릭시 클릭한 대상이 포인트면 회전이벤트
+            this.rotationObj = objIntersects[0].object
+            this.createRotationControls(this.rotationObj)
+          } else {
+            this.rotationObj = null
+          }
+        }
       })
-      this.canvasContainer.addEventListener('mousemove', () => {
+      this.canvasContainer.addEventListener('mousemove', (event) => {
+        if (this.rotationObj) {
+          return
+        }
         this.controls.enabled = true
       })
       this.canvasContainer.addEventListener('mouseup', this.getPoints, false)
@@ -241,7 +286,11 @@ export default {
     },
     getPoints (event) {
       // 클릭한 지점의 좌표를 가져오고 큐브를 생성하는 함수
-      if (this.controls.enabled) {
+      if (this.isPoint && !this.isRightButton) {
+        this.$toast.error('해당 위치에 포인트를 생성할 수 없습니다.')
+        return
+      }
+      if (this.controls.enabled || this.rotationObj || this.isRightButton) {
         // 카메라 조종중이라면 return
         return
       }
@@ -275,11 +324,11 @@ export default {
         point.scale.x = 0.01
         point.scale.y = 0.01
         point.scale.z = 0.01
-        point.type = 'point'
+        point.isPoint = true
         point.title = this.getPointTitle()
         this.scene.add(point)
         // 보조선
-        const axesHelper = new AxesHelper(5)
+        const axesHelper = new AxesHelper(2)
         // X 축은 빨간색입니다.
         // Y 축은 녹색입니다.
         // Z 축은 파란색입니다.
@@ -330,7 +379,6 @@ export default {
               // 가장 바깥쪽 표면의 방향
               const normal = intersects[0].face.normal
               // 3D 모델의 표면과 같은 방향으로 회전시키기
-              // console.log('=== ', newPoint, normal)
               point.lookAt(new Vector3().addVectors(newPoint, normal))
               quaternions.push(point.quaternion)
             }
@@ -339,7 +387,7 @@ export default {
             point.lookAt(new Vector3().addVectors(newPoint, item.normal))
             quaternions.push(point.quaternion)
           }
-          point.type = 'point'
+          point.isPoint = true
           point.title = item.title
           this.scene.add(point)
           const axesHelper = new AxesHelper(5)
@@ -354,7 +402,7 @@ export default {
     resetPoints () {
       const sceneMeshes = [...this.scene.children]
       sceneMeshes.forEach((item) => {
-        if (item.type === 'point') {
+        if (item.isPoint) {
           this.scene.remove(item)
         }
       })
@@ -415,15 +463,57 @@ export default {
     removePoint (val, idx) {
       this.points.splice(idx, 1)
       this.scene.remove(val)
+    },
+    createRotationControls (object) {
+      // 3d 좌표를 dom 좌표로 전환
+      const vector = new Vector3()
+      vector.set(object.position.x, object.position.y, object.position.z)
+      // const screenPosition = vector.project(this.camera)
+      // const containerPosX = (screenPosition.x + 1) * this.canvasContainer.offsetWidth / 2
+      // const containerPosY = (-screenPosition.y + 1) * this.canvasContainer.offsetHeight / 2
+      this.objRotateVal = object?.rotation?.z || 0
+      // this.rotateCtrlX = containerPosX
+      // this.rotateCtrlY = containerPosY
+    },
+    onSliderChange (event) {
+      // 포인트 obj 회전 시키기
+      if (this.rotationObj) {
+        this.rotationObj.rotation.z = event
+      }
     }
   }
 }
 </script>
 <style lang="scss">
 .canvas-container{
+  position: relative;
   .canvas-title{
     font-weight: 900;
     font-size: 1.750rem;
+  }
+  .obj-slider-container{
+    position: absolute;
+    left: 50%;
+    top: 3rem;
+    transform: translate(-50%,-50%);
+    .obj-rotation-slider{
+      position: relative;
+      &::after{
+        position: absolute;
+        left: 50%;
+        top: -1rem;
+        content: '슬라이더를 조절하여 회전합니다.';
+        color: #efefef;
+        font-size: 0.75rem;
+        transform: translate(-50%,-50%);
+        white-space: nowrap;
+        text-shadow: 1px 1px 1px #000;
+      }
+      .vue-slider-dot-handle{
+        border-radius: 5%;
+        width: 60%;
+      }
+    }
   }
 }
 

@@ -16,6 +16,10 @@
           <b-icon icon="info-circle-fill" variant="secondary" class="mr-2" />
           클릭한 위치에 포인트가 생성됩니다.
         </p>
+        <p class="mt-2 pl-2 fs-small text-muted d-flex align-items-center" @contextmenu="false">
+          <b-icon icon="info-circle-fill" variant="secondary" class="mr-2" />
+          생성된 포인트에 우클릭 후 상단 슬라이드바를 조절하여 회전시킬 수 있습니다.
+        </p>
       </b-col>
       <b-col cols="6" class="main-box py-4">
         <div class="d-flex justify-content-between align-items-center ">
@@ -214,10 +218,8 @@ export default {
           point.position.x, point.position.y, point.position.z,
           point.quaternion.x, point.quaternion.y, point.quaternion.z, point.quaternion.w]
       })
-      console.log('poses ::: ', poses)
       this.socket.emit('set_motion_plan_goals', { poses })
       this.socket.on('set_motion_plan_goals', (data) => {
-        console.log('set_motion_plan_goals :: ', data.data)
         this.isReady = data.data
         this.socket.off('set_motion_plan_goals')
       })
