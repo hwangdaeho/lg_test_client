@@ -275,9 +275,6 @@ export default {
         }
       })
       this.canvasContainer.addEventListener('mousemove', (event) => {
-        if (this.rotationObj) {
-          return
-        }
         this.controls.enabled = true
       })
       this.canvasContainer.addEventListener('mouseup', this.getPoints, false)
