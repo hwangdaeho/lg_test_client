@@ -138,7 +138,7 @@ export default {
       // 3D모델
       new OBJLoader()
         .setPath('/obj/')
-        .load('drawer_scaled.obj', function (object) {
+        .load('sample_jig_scaled.obj', function (object) {
           object.traverse(function (child) {
             child.castShadow = true
             // if (child.isMesh) {
